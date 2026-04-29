@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "coingecko_market_chart",
+  "type": "object",
+  "required": ["coin_id", "snapshot_ts", "snapshot_date", "price_usd"],
+  "properties": {
+    "coin_id":         { "type": "string" },
+    "snapshot_ts":     { "type": "string", "format": "date-time" },
+    "snapshot_date":   { "type": "string", "format": "date" },
+    "price_usd":       { "type": "number", "minimum": 0 },
+    "volume_usd":      { "type": ["number", "null"], "minimum": 0 },
+    "market_cap_usd":  { "type": ["number", "null"], "minimum": 0 },
+    "_ingestion_ts":   { "type": "string", "format": "date-time" },
+    "_source_system":  { "type": "string" }
+  }
+}

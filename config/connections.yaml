@@ -1,0 +1,52 @@
+# =============================================================================
+# Connection definitions. All values come from environment variables - never
+# from this file directly. Templated with ${VAR} syntax.
+# =============================================================================
+
+object_storage:
+  s3:
+    endpoint_url: ${AWS_S3_ENDPOINT_URL}
+    region: ${AWS_DEFAULT_REGION}
+    access_key_id: ${AWS_ACCESS_KEY_ID}
+    secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+    buckets:
+      bronze: ${AWS_S3_BUCKET_BRONZE}
+      silver: ${AWS_S3_BUCKET_SILVER}
+  gcs:
+    endpoint_url: ${GCS_ENDPOINT_URL}
+    project_id: ${GCP_PROJECT_ID}
+    credentials_file: ${GOOGLE_APPLICATION_CREDENTIALS}
+    buckets:
+      bronze: ${GCS_BUCKET_BRONZE}
+
+warehouses:
+  snowflake:
+    account: ${SNOWFLAKE_ACCOUNT}
+    user: ${SNOWFLAKE_USER}
+    password: ${SNOWFLAKE_PASSWORD}
+    role: ${SNOWFLAKE_ROLE}
+    warehouse: ${SNOWFLAKE_WAREHOUSE}
+    database: ${SNOWFLAKE_DATABASE}
+    default_schema: ${SNOWFLAKE_SCHEMA}
+  bigquery:
+    project_id: ${BQ_PROJECT_ID}
+    dataset: ${BQ_DATASET_GOLD}
+    location: ${BQ_LOCATION}
+    credentials_file: ${GOOGLE_APPLICATION_CREDENTIALS}
+  mssql:
+    host: ${MSSQL_HOST}
+    port: ${MSSQL_PORT}
+    user: ${MSSQL_USER}
+    password: ${MSSQL_PASSWORD}
+    database: ${MSSQL_DATABASE}
+    driver: ${MSSQL_DRIVER}
+  fabric:
+    workspace_id: ${FABRIC_WORKSPACE_ID}
+    lakehouse_id: ${FABRIC_LAKEHOUSE_ID}
+    tenant_id: ${FABRIC_TENANT_ID}
+    client_id: ${FABRIC_CLIENT_ID}
+    client_secret: ${FABRIC_CLIENT_SECRET}
+
+alerts:
+  slack:
+    webhook_url: ${SLACK_WEBHOOK_URL}

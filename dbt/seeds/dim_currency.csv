@@ -1,0 +1,6 @@
+currency_code,currency_name,is_active
+USD,US Dollar,true
+EUR,Euro,true
+GBP,British Pound,true
+JPY,Japanese Yen,true
+CHF,Swiss Franc,true

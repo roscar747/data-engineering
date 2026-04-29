@@ -1,0 +1,143 @@
+# =============================================================================
+# Declarative pipeline configuration.
+# Adding a new source = adding a block here. No code changes required.
+# =============================================================================
+
+defaults:
+  retry:
+    attempts: 5
+    initial_wait_seconds: 2
+    backoff_factor: 2
+    max_wait_seconds: 60
+  bronze:
+    format: parquet
+    compression: snappy
+    partition_by: ["ingestion_date", "source_system"]
+  silver:
+    format: parquet
+    compression: zstd
+
+sources:
+
+  - name: coingecko_market_chart
+    kind: api
+    description: Daily OHLCV-equivalent data for top crypto assets.
+    base_url: https://api.coingecko.com/api/v3
+    endpoint: /coins/{coin_id}/market_chart
+    method: GET
+    params:
+      vs_currency: usd
+      days: "365"
+      interval: daily
+    paginate:
+      strategy: none
+    rate_limit:
+      requests_per_minute: 25
+    iterate:
+      param: coin_id
+      values: [bitcoin, ethereum, solana, cardano, polkadot]
+    bronze_path: s3://finsight-bronze/coingecko/market_chart/
+    schema: data/schemas/coingecko_market_chart.json
+    incremental:
+      strategy: high_watermark
+      watermark_column: snapshot_ts
+      lookback_days: 2
+
+  - name: fred_macro_indicators
+    kind: file_url
+    description: FRED public CSV endpoints for macro-economic series.
+    base_url: https://fred.stlouisfed.org/graph/fredgraph.csv
+    series:
+      - id: GDP
+        description: US Gross Domestic Product, quarterly
+      - id: CPIAUCSL
+        description: US CPI - All Urban Consumers
+      - id: UNRATE
+        description: US Unemployment rate
+      - id: DGS10
+        description: 10-year treasury constant maturity
+    bronze_path: gs://finsight-bronze-gcs/fred/
+    incremental:
+      strategy: full_refresh
+    schedule_interval: "@daily"
+
+  - name: synthetic_transactions
+    kind: file_local
+    description: Synthetic customer card-not-present transactions.
+    path: data/sample/synthetic_transactions.csv
+    bronze_path: s3://finsight-bronze/synthetic/transactions/
+    schema: data/schemas/synthetic_transactions.json
+    incremental:
+      strategy: append
+      partition_column: transaction_date
+
+  - name: reference_assets
+    kind: file_local
+    description: Reference master data for asset classification.
+    path: data/sample/reference_assets.csv
+    bronze_path: s3://finsight-bronze/reference/assets/
+    incremental:
+      strategy: scd2
+      business_key: [asset_symbol]
+
+silver_jobs:
+  - name: crypto_prices_daily
+    source: coingecko_market_chart
+    engine: duckdb
+    transformations:
+      - explode_array_columns: true
+      - cast_types: true
+      - dedupe_on: [coin_id, snapshot_date]
+      - add_audit_columns: true
+
+  - name: macro_indicators_clean
+    source: fred_macro_indicators
+    engine: duckdb
+    transformations:
+      - normalize_long_format: true
+      - forward_fill_gaps: true
+      - add_audit_columns: true
+
+  - name: transactions_enriched
+    source: synthetic_transactions
+    engine: duckdb
+    transformations:
+      - mask_pii_columns: [email, ip_address]
+      - currency_normalize_to: usd
+      - add_audit_columns: true
+
+gold_marts:
+  - name: fct_daily_market_metrics
+    grain: [asset_key, trade_date]
+    refresh: incremental
+    materialised_in: [snowflake, bigquery, mssql, fabric]
+  - name: dim_asset
+    refresh: scd2
+    materialised_in: [snowflake, bigquery, mssql, fabric]
+  - name: fct_customer_transaction_summary
+    grain: [customer_key, transaction_date]
+    refresh: incremental
+    materialised_in: [snowflake, bigquery, mssql, fabric]
+
+quality:
+  bronze:
+    - check: schema_contract
+    - check: row_count_min
+      threshold: 1
+  silver:
+    - check: not_null
+      columns: [asset_symbol, snapshot_date, close_usd]
+    - check: unique
+      columns: [asset_symbol, snapshot_date]
+    - check: freshness_hours
+      threshold: 36
+  gold:
+    - check: referential_integrity
+      from: fct_daily_market_metrics.asset_key
+      to: dim_asset.asset_key
+
+alerting:
+  on_failure:
+    - slack
+  on_dq_warn:
+    - slack

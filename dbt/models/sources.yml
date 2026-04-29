@@ -1,0 +1,44 @@
+version: 2
+
+sources:
+  - name: silver
+    description: Silver layer - cleaned and conformed data from Bronze.
+    schema: silver
+    tables:
+      - name: crypto_prices_daily
+        description: Daily crypto OHLCV-equivalent metrics.
+        columns:
+          - name: asset_symbol
+            tests: [not_null]
+          - name: snapshot_date
+            tests: [not_null]
+          - name: close_usd
+            tests: [not_null]
+        loaded_at_field: _silver_ts
+        freshness:
+          warn_after: { count: 24, period: hour }
+          error_after: { count: 36, period: hour }
+
+      - name: macro_indicators_clean
+        description: Cleaned FRED macro indicators.
+        columns:
+          - name: series_id
+            tests: [not_null]
+          - name: observation_date
+            tests: [not_null]
+
+      - name: transactions_enriched
+        description: Synthetic transactions with FX-normalised amounts and PII masking.
+        columns:
+          - name: transaction_id
+            tests: [not_null, unique]
+
+      - name: reference_assets_current
+        description: Current view of reference asset master.
+
+  - name: seeds
+    description: Static reference data managed in dbt seeds.
+    schema: seeds
+    tables:
+      - name: dim_currency
+      - name: dim_country

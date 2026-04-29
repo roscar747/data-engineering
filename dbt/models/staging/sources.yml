@@ -1,0 +1,14 @@
+version: 2
+
+# This file groups source definitions used by staging models.
+# (sources.yml at the models/ root contains the production source definitions;
+#  this exists so dbt --select staging works in isolation.)
+
+sources:
+  - name: silver
+    schema: silver
+    tables:
+      - name: crypto_prices_daily
+      - name: macro_indicators_clean
+      - name: transactions_enriched
+      - name: reference_assets_current

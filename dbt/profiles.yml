@@ -1,0 +1,56 @@
+finsight:
+  target: duckdb
+  outputs:
+
+    duckdb:
+      type: duckdb
+      path: ../data/_mock_warehouses/dbt.duckdb
+      threads: 4
+
+    snowflake:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'GOLD') }}"
+      threads: 8
+      client_session_keep_alive: false
+
+    bigquery:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      project: "{{ env_var('BQ_PROJECT_ID') }}"
+      dataset: "{{ env_var('BQ_DATASET_GOLD') }}"
+      threads: 8
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      priority: interactive
+      job_execution_timeout_seconds: 600
+
+    mssql:
+      type: sqlserver
+      driver: "{{ env_var('MSSQL_DRIVER') }}"
+      server: "{{ env_var('MSSQL_HOST') }}"
+      port: "{{ env_var('MSSQL_PORT') | int }}"
+      user: "{{ env_var('MSSQL_USER') }}"
+      password: "{{ env_var('MSSQL_PASSWORD') }}"
+      database: "{{ env_var('MSSQL_DATABASE') }}"
+      schema: gold
+      encrypt: true
+      trust_cert: true
+      threads: 4
+
+    fabric:
+      type: fabric
+      driver: "ODBC Driver 18 for SQL Server"
+      server: "{{ env_var('FABRIC_WORKSPACE_ID') }}.datawarehouse.fabric.microsoft.com"
+      database: "{{ env_var('FABRIC_LAKEHOUSE_ID') }}"
+      schema: gold
+      authentication: ActiveDirectoryServicePrincipal
+      tenant_id: "{{ env_var('FABRIC_TENANT_ID') }}"
+      client_id: "{{ env_var('FABRIC_CLIENT_ID') }}"
+      client_secret: "{{ env_var('FABRIC_CLIENT_SECRET') }}"
+      threads: 4

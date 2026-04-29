@@ -1,0 +1,53 @@
+version: 2
+
+models:
+
+  - name: dim_asset
+    description: SCD2 dimension of assets (crypto + macro series).
+    columns:
+      - name: asset_key
+        description: Surrogate key, stable within a SCD2 version.
+        tests: [not_null, unique]
+      - name: asset_symbol
+        tests: [not_null]
+      - name: asset_class
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['CRYPTO', 'MACRO', 'EQUITY', 'COMMODITY']
+      - name: is_current
+        tests:
+          - not_null
+          - accepted_values: { values: [0, 1] }
+
+  - name: fct_daily_market_metrics
+    description: Daily metrics for tradeable assets (crypto first; equities planned).
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [asset_key, trade_date]
+    columns:
+      - name: asset_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_asset')
+              field: asset_key
+      - name: trade_date
+        tests: [not_null]
+      - name: close_usd
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+  - name: fct_customer_transaction_summary
+    description: Daily customer transaction roll-up with fraud flagging.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [customer_key, transaction_date]
+    columns:
+      - name: gross_usd
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= fraud_usd"

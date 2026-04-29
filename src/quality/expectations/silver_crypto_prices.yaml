@@ -1,0 +1,58 @@
+# Great Expectations expectation suite: silver_crypto_prices_daily.
+# Loaded by `great_expectations checkpoint run silver_crypto_prices`.
+
+expectation_suite_name: silver_crypto_prices_daily
+data_asset_type: Dataset
+expectations:
+
+  - expectation_type: expect_table_columns_to_match_set
+    kwargs:
+      column_set:
+        - asset_symbol
+        - snapshot_date
+        - snapshot_ts
+        - close_usd
+        - volume_usd
+        - market_cap_usd
+        - source_row_count
+        - _silver_ts
+
+  - expectation_type: expect_column_values_to_not_be_null
+    kwargs:
+      column: asset_symbol
+
+  - expectation_type: expect_column_values_to_not_be_null
+    kwargs:
+      column: snapshot_date
+
+  - expectation_type: expect_column_values_to_be_in_set
+    kwargs:
+      column: asset_symbol
+      value_set: [bitcoin, ethereum, solana, cardano, polkadot]
+
+  - expectation_type: expect_compound_columns_to_be_unique
+    kwargs:
+      column_list: [asset_symbol, snapshot_date]
+
+  - expectation_type: expect_column_values_to_be_between
+    kwargs:
+      column: close_usd
+      min_value: 0.0001
+      max_value: 1000000.0
+
+  - expectation_type: expect_column_pair_values_A_to_be_greater_than_B
+    kwargs:
+      column_A: market_cap_usd
+      column_B: close_usd
+      ignore_row_if: either_value_is_missing
+
+meta:
+  notes:
+    format: markdown
+    content: |
+      ### Owner
+      data-platform@finsight
+
+      ### SLA
+      - Freshness: <= 36h
+      - Failure on any expectation triggers Slack alert and fails Airflow task.

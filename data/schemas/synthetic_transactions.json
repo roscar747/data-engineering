@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "synthetic_transactions",
+  "type": "object",
+  "required": ["transaction_id", "customer_id", "transaction_date", "amount", "currency"],
+  "properties": {
+    "transaction_id":   { "type": "string" },
+    "customer_id":      { "type": "string" },
+    "transaction_date": { "type": "string", "format": "date" },
+    "transaction_ts":   { "type": "string", "format": "date-time" },
+    "amount":           { "type": "number", "exclusiveMinimum": 0 },
+    "currency":         { "type": "string", "enum": ["USD", "EUR", "GBP", "JPY"] },
+    "merchant_id":      { "type": "string" },
+    "merchant_category":{ "type": "string" },
+    "country":          { "type": "string", "minLength": 2, "maxLength": 3 },
+    "channel":          { "type": "string", "enum": ["WEB", "MOBILE", "POS"] },
+    "is_fraud":         { "type": "integer", "enum": [0, 1] },
+    "email":            { "type": "string" },
+    "ip_address":       { "type": "string" }
+  }
+}
